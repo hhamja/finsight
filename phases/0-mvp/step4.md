@@ -12,8 +12,9 @@
 범용 CSV를 메모리에서 파싱·정규화하는 lib를 만든다. 패키지: `papaparse`(+ `@types/papaparse`).
 
 - `src/lib/csv.ts`:
-  - `parseCsv(input: File | string): Promise<RawRow[]>` — 헤더 유무·구분자(`,` / `;` / 탭)·인코딩 변동을 최대한 견고하게 처리. `RawRow = Record<string,string>`로 원본 헤더를 보존한다.
-  - `MAX_ROWS`(예: 5000) 초과 시 잘라내고 경고 메타를 함께 반환. 빈 파일/깨진 CSV는 명확한 에러를 던진다.
+  - `parseCsv(input: File | string): Promise<RawRow[]>` — papaparse 기본 옵션(`header: true`, `skipEmptyLines: true`, 구분자 자동 감지)으로 파싱. `RawRow = Record<string,string>`로 원본 헤더를 보존한다.
+  - **인코딩 폴백(필수)**: 입력이 `File`이면 ArrayBuffer로 읽어 `TextDecoder('utf-8')` 시도 → 치환문자(`�`) 감지되면 `TextDecoder('euc-kr')`(CP949 포함)로 재디코드한 뒤 파싱한다. 선두 BOM은 제거한다. (국내 은행/카드 CSV는 CP949가 흔해 UTF-8 가정 시 한글 가맹점명이 깨짐.) 메타 객체는 만들지 않는다 — 문자열만 올바르게 디코드해 넘긴다.
+  - `MAX_ROWS`(예: 5000) 초과 시 **throw**한다(잘라내거나 메타 객체를 반환하지 않는다 — 반환 타입은 `RawRow[]` 유지). 빈 파일/깨진 CSV도 명확한 에러를 던진다.
   - 컬럼 의미(날짜/금액/가맹점) 매핑은 여기서 하지 않는다 — step5에서 Claude가 추론한다. 여기선 "행들의 원시 표"만 만든다.
 - 결과는 호출자에게 반환만 한다. 파일을 디스크에 쓰거나 어디에도 저장하지 않는다.
 
@@ -24,7 +25,7 @@ npm run build
 npm test
 ```
 
-샘플 CSV 픽스처(쉼표/세미콜론/헤더 없음)로 `src/lib/__tests__/csv.test.ts` 단위테스트를 추가하라.
+샘플 CSV 픽스처(쉼표/세미콜론/헤더 없음 + **CP949/EUC-KR로 인코딩된 한글 가맹점명** 픽스처)로 `src/lib/__tests__/csv.test.ts` 단위테스트를 추가하라. CP949 입력이 한글로 올바르게 디코드되는지 검증한다.
 
 ## 검증 절차
 

@@ -18,14 +18,20 @@
 - `Tier = "free" | "pro"`
 - `Transaction { date: string /* ISO */; amount: number; merchant: string; raw?: Record<string,string> }`
   - amount 부호 규약: **지출은 양수, 환불/입금은 음수**. (주석으로 명시)
-- `Category { name: string; total: number; count: number; pct: number }`
+- `Category { name: string; total: number; count: number; pct: number; topMerchants?: { name: string; total: number; count: number }[] }` — `topMerchants`는 카테고리 내 상위 가맹점(Pro 드릴다운용 **집계**, 거래 단위 리스트 아님).
 - `TrendPoint { period: string /* "YYYY-MM" */; total: number }`
 - `Anomaly { kind: "large" | "duplicate" | "subscription_leak"; title: string; description: string; amount: number; date: string; merchant?: string }`
-- `AnalysisResult { currency: string; period: { start: string; end: string }; totalSpend: number; categories: Category[]; trend: TrendPoint[]; anomalies: Anomaly[]; summary: string; savingTips: string[] }`
+- `ColumnMapping { date: string; amount: string; merchant: string }` — Claude가 어느 CSV 헤더를 각 의미로 읽었는지.
+- `Confidence = "low" | "medium" | "high"`
+- `LabeledTransaction { date: string; amount: number; merchant: string; category: string }` — **services/claude 라벨링 출력의 거래 단위(메모리 전용, 절대 저장 안 함)**. 지출 양수/환불 음수 규약.
+- `Classification { mapping: ColumnMapping; confidence: Confidence; labeled: LabeledTransaction[]; summary: string; savingTips: string[] }` — **step5 `services/claude`의 반환 타입**. 숫자 집계는 들어있지 않다(라벨·요약·매핑만).
+- `AnalysisResult { currency: string; period: { start: string; end: string }; totalSpend: number; categories: Category[]; trend: TrendPoint[]; anomalies: Anomaly[]; summary: string; savingTips: string[]; mapping: ColumnMapping; confidence: Confidence }` — **step6 `lib/aggregate`의 출력이자 DB 저장본**. 집계 + 매핑/신뢰도만(거래 단위 리스트 없음).
 
-각 타입에 대응하는 zod 스키마를 `src/types/schema.ts`에 둔다(`AnalysisResultSchema` 등). 이 스키마는 step5(Claude 출력 검증)와 step6(API 검증)에서 재사용된다.
+각 타입에 대응하는 zod 스키마를 `src/types/schema.ts`에 둔다(`ClassificationSchema`, `AnalysisResultSchema` 등). **이 스키마가 유일한 계약**이다 — `ClassificationSchema`는 step5에서 Claude tool-use 출력을 검증하고 모킹 테스트도 이 스키마로 생성하며(손으로 짠 모크 금지, 드리프트 차단), `AnalysisResultSchema`는 step6 집계 출력·API 응답을 검증한다.
 
-Free/Pro 메모(주석으로 명시): free는 `categories` + `summary`만 채워지고 `trend`/`anomalies`/`savingTips`는 빈 배열일 수 있다.
+설계 메모(주석으로 명시):
+- **역할 분리(ADR-007)**: `Classification`(LLM 라벨링) → `AnalysisResult`(코드 집계). 합계·추이·중복/구독 탐지는 `lib/aggregate`가 계산하며 이 타입엔 LLM이 계산한 숫자가 없다.
+- **Free/Pro 게이팅**: free는 `categories`(상위) + `summary` + `mapping`/`confidence`만 채워 반환하고 `trend`/`anomalies`/`savingTips`는 빈 배열로 필터(게이팅은 step6 한 곳). 저장본은 항상 전체.
 
 ## Acceptance Criteria
 

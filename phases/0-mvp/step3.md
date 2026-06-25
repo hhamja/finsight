@@ -11,12 +11,13 @@
 
 Supabase Auth 기반 로그인/가입과 보호 라우트를 만든다.
 
-1. 인증 페이지 `src/app/(auth)/login/page.tsx` — 이메일+비밀번호(또는 매직링크) 로그인/가입 폼. `/docs/UI_GUIDE.md`의 입력/버튼 스타일 사용.
-   - 폼 제출은 Server Action 또는 route handler로. 클라이언트 인증 호출은 `client.ts`(anon key 범위)만 허용.
+1. 인증 페이지 `src/app/(auth)/login/page.tsx` — **매직링크(이메일 OTP 링크)** 단독(방식 하나로 고정, 비밀번호 폼은 만들지 않음). 이메일 입력 → `signInWithOtp` → "메일을 확인하세요" 상태. `/docs/UI_GUIDE.md`의 입력/버튼 스타일 사용.
+   - 콜백 route handler `src/app/auth/callback/route.ts`: 매직링크의 code를 세션으로 교환(`exchangeCodeForSession`) 후 `/dashboard` 리다이렉트.
+   - 폼 제출은 Server Action 또는 route handler로. 클라이언트 인증 호출은 `client.ts`(anon key 범위)만 허용. 비밀번호 해싱·재설정 플로우는 만들지 않는다(매직링크라 불필요).
 2. 세션 헬퍼 `src/lib/auth.ts`:
    - `getUser()` (server, 현재 세션 유저 또는 null)
    - `requireUser()` (없으면 `/login`으로 리다이렉트)
-3. `src/middleware.ts`: `/dashboard` 등 보호 경로는 미인증 시 `/login`으로 리다이렉트. `@supabase/ssr`의 미들웨어 세션 갱신 패턴 사용.
+3. `src/middleware.ts`: `/dashboard` 등 보호 경로는 미인증 시 `/login`으로 리다이렉트. `@supabase/ssr`의 미들웨어 세션 갱신 패턴 사용. **`matcher`에서 `/api/polar/webhook`·`/auth/callback`(및 공개 API)은 제외한다** — 웹훅은 세션 쿠키가 없는 서버-서버 호출이고, 콜백은 아직 세션을 만들기 전이라 인증 리다이렉트에 걸리면 안 된다.
 4. 로그인 성공 시 `profiles` 행 보장(트리거가 없으면 upsert). 로그아웃 액션 제공.
 5. 인증 성공 후 `/dashboard`로 리다이렉트.
 
@@ -43,4 +44,5 @@ npm test
 - 대시보드 본문·업로드·분석 UI를 만들지 마라. 이유: step7 범위다.
 - 자체 비밀번호 해싱/세션 테이블을 만들지 마라. 이유: 인증은 Supabase Auth에 위임한다(ADR-002).
 - 보호 라우트 가드를 빠뜨리지 마라. 이유: 미인증 사용자가 대시보드/데이터에 접근하면 안 된다.
+- middleware로 `/api/polar/webhook`을 차단하지 마라. 이유: 웹훅은 공개 엔드포인트여야 하며(서명 검증으로 인가), 막으면 결제 상태 동기화가 깨진다.
 - 기존 테스트를 깨뜨리지 마라.
