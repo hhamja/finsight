@@ -1,0 +1,17 @@
+{
+  "project": "FinSight",
+  "phase": "0-mvp",
+  "steps": [
+    { "step": 0, "name": "project-setup", "status": "pending" },
+    { "step": 1, "name": "core-types", "status": "pending" },
+    { "step": 2, "name": "supabase-setup", "status": "pending" },
+    { "step": 3, "name": "auth-flow", "status": "pending" },
+    { "step": 4, "name": "csv-parser", "status": "pending" },
+    { "step": 5, "name": "claude-analysis", "status": "pending" },
+    { "step": 6, "name": "analyze-api", "status": "pending" },
+    { "step": 7, "name": "dashboard-ui", "status": "pending" },
+    { "step": 8, "name": "landing-page", "status": "pending" },
+    { "step": 9, "name": "polar-billing", "status": "pending" },
+    { "step": 10, "name": "deploy", "status": "pending" }
+  ]
+}
