@@ -1,0 +1,109 @@
+/* ──────────────────────────────────────────────────────────────
+   FinSight 디자인 토큰 (다크 고정)
+   원본: 프로토타입 FinSight.html :root + components.jsx 인라인 색상
+   실서비스 스택은 Tailwind CSS v4 → 아래를 globals.css에 그대로 두고
+   @theme inline 로 매핑(파일 하단 참고).
+   ────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── 표면(Surface): 어두운→밝은 순. 다크 한 종류만 존재(라이트 모드 없음) ── */
+  --app: #0b0c0e;       /* 앱 배경(최하단) */
+  --panel: #141619;     /* 카드/사이드바 */
+  --panel-2: #1c1f23;   /* 카드 안 단(입력·드릴다운·active nav·바 트랙) */
+  --border: #25282d;    /* 기본 경계선 */
+  --border-2: #34383f;  /* hover/강조 경계선·점선 드롭존 */
+
+  /* ── 텍스트: 밝은→흐린 순 ── */
+  --text: #e9eaec;      /* 본문·수치·제목 */
+  --muted: #9aa0a8;     /* 보조 라벨·설명 */
+  --faint: #6a7078;     /* 캡션·placeholder·비활성 */
+
+  /* ── 차트 ── */
+  --bar: #2a2e34;       /* 막대 비강조 색(추이 차트) */
+
+  /* ── 포인트 1색(accent): 기본 그린. 무채색 + 단일 포인트 원칙. 보라/인디고 금지 ── */
+  --accent: #3ecf8e;
+  --accent-dim: color-mix(in oklab, var(--accent) 14%, var(--panel));     /* 아이콘 배경·강조 패널 */
+  --accent-border: color-mix(in oklab, var(--accent) 38%, transparent);   /* 강조 경계·focus ring */
+
+  /* ── 타이포 ── */
+  --font: "Pretendard Variable", Pretendard, -apple-system, sans-serif;
+}
+
+/* 대체 포인트색(프로토타입 Tweaks에서 토글하던 값 — 모두 무채색+1색 원칙 유지) */
+/* 그린 #3ecf8e (기본) · 앰버 #f5b13d · 민트 #34d6c8 · 라임 #a6e22e */
+
+/* ──────────────────────────────────────────────────────────────
+   의미 색상(semantic) — accent 토큰으로 표현 불가한 고정값.
+   CSS 변수가 아니라 컴포넌트에 하드코딩되어 있던 값들. 그대로 사용할 것.
+   ────────────────────────────────────────────────────────────── */
+
+/* danger(위험·삭제·이중청구) */
+/* --danger-text:   #ff8585   본문/수치 빨강 (지출 '증가'도 이 색 — 늘어난 건 나쁨) */
+/* --danger-strong: #ff6b6b   danger 버튼 글자·확정 버튼 배경 */
+/* --danger-bg:     #2a1718   danger pill/아이콘 배경 */
+/* --danger-border: #4a2424   danger pill 경계 (버튼 경계는 #3a2422) */
+
+/* warn(주의·이상 거래) */
+/* --warn-text:   #e6b45c     본문/수치 노랑 */
+/* --warn-bg:     #2a2114     warn pill 배경 */
+/* --warn-border: #4a3a1c     warn pill 경계 */
+
+/* accent 위 텍스트(primary 버튼 글자·체크 아이콘) */
+/* --on-accent: #06120c       accent 면 위 near-black */
+
+/* 방향 색 규칙(전월 대비 등):
+   지출 '증가'(up)  → #ff8585 (빨강, 나쁨)
+   지출 '감소'(down) → var(--accent) (그린, 좋음)
+   '주의'(warn)     → #e6b45c                                          */
+
+/* 신뢰도(Confidence) 임계값 → 색:
+   >= 0.95 → var(--accent) · >= 0.90 → #e6b45c · 그 미만 → #ff8585      */
+
+/* ──────────────────────────────────────────────────────────────
+   기본 스타일 (FinSight.html <style>에서)
+   ────────────────────────────────────────────────────────────── */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--app);
+  color: var(--text);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "tnum";   /* 모든 수치는 tabular-nums (자릿수 흔들림 방지) */
+}
+::selection { background: var(--accent-border); }
+input::placeholder { color: var(--faint); }
+
+/* 스크롤바 */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 6px; border: 2px solid var(--app); }
+::-webkit-scrollbar-thumb:hover { background: #444a52; }
+
+/* 애니메이션 */
+.pulse { animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.7); } }
+@keyframes pop { from { transform: scale(0.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* ──────────────────────────────────────────────────────────────
+   Tailwind CSS v4 매핑 (실서비스 globals.css)
+   위 :root 를 그대로 두고 아래로 토큰을 Tailwind 유틸에 연결한다.
+
+   @import "tailwindcss";
+   @theme inline {
+     --color-app:       var(--app);
+     --color-panel:     var(--panel);
+     --color-panel-2:   var(--panel-2);
+     --color-border:    var(--border);
+     --color-border-2:  var(--border-2);
+     --color-text:      var(--text);
+     --color-muted:     var(--muted);
+     --color-faint:     var(--faint);
+     --color-accent:    var(--accent);
+     --font-sans:       var(--font);
+   }
+   → bg-app, bg-panel, text-muted, border-border, text-accent ... 로 사용.
+   accent-dim / accent-border 는 color-mix라 유틸 대신 CSS 변수 직접 참조 권장:
+     style={{ background: "var(--accent-dim)" }}  또는  bg-[var(--accent-dim)]
+   ────────────────────────────────────────────────────────────── */
